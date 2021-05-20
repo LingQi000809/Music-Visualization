@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- library -->
+    <!-- <script src="https://unpkg.com/@tonejs/midi/dist/tf.min.js"></script> -->
+    <script type="text/javascript" src="https://unpkg.com/tone@latest/build/Tone.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/@tonejs/ui@0.0.8/build/tonejs-ui.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/@tonejs/midi"></script>
+
+
+    <!-- css -->
+    <link href="style.css" rel="stylesheet">
+
+    <title>Music Visualization Demo</title>
+</head>
+
+<body>
+    <!-- The div containing the canvas -->
+
+    <div id="FileDrop">
+        <div id="Text">
+            Drop a midi file here
+        </div>
+        <input type="file" accept="audio/midi" />
+    </div>
+
+    <div id="canvas-wrapper">
+        <canvas id="canvas">
+
+        </canvas>
+    </div>
+
+    <!-- js -->
+    <script src="js/midi_processor.js" defer></script>
+
+    <script type="text/javascript">
+        if (!(
+                window.File &&
+                window.FileReader &&
+                window.FileList &&
+                window.Blob
+            )) {
+            document.querySelector("#FileDrop #Text").textContent =
+                "Reading files not supported by this browser";
+        } else {
+            const fileDrop = document.querySelector("#FileDrop");
+
+            fileDrop.addEventListener("dragenter", () =>
+                fileDrop.classList.add("Hover")
+            );
+
+            fileDrop.addEventListener("dragleave", () =>
+                fileDrop.classList.remove("Hover")
+            );
+
+            fileDrop.addEventListener("drop", () =>
+                fileDrop.classList.remove("Hover")
+            );
+
+            document
+                .querySelector("#FileDrop input")
+                .addEventListener("change", (e) => {
+                    //get the files
+                    const files = e.target.files;
+                    if (files.length > 0) {
+                        const file = files[0];
+                        document.querySelector(
+                            "#FileDrop #Text"
+                        ).textContent = file.name;
+                        parseFile(file);
+                    }
+                });
+        }
+
+        let currentMidi = null;
+
+        function parseFile(file) {
+            //read the file
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const midi = new Midi(e.target.result);
+                currentMidi = midi;
+            };
+            reader.readAsArrayBuffer(file);
+        }
+    </script>
+
+</body>
+
+</html>
