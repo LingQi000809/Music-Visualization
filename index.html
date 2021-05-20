@@ -35,6 +35,8 @@
     <script src="js/midi_processor.js" defer></script>
 
     <script type="text/javascript">
+        let midi = null;
+
         if (!(
                 window.File &&
                 window.FileReader &&
@@ -73,14 +75,13 @@
                 });
         }
 
-        let currentMidi = null;
-
         function parseFile(file) {
             //read the file
             const reader = new FileReader();
             reader.onload = function(e) {
-                const midi = new Midi(e.target.result);
-                currentMidi = midi;
+                midi = new Midi(e.target.result);
+
+                draw(midi);
             };
             reader.readAsArrayBuffer(file);
         }
