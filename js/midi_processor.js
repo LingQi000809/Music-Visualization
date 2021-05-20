@@ -44,10 +44,6 @@ function draw(midi) {
                 (noteRange - note.midi) * unitHeight,
                 note.durationTicks * unitWidth,
                 unitHeight);
-            console.log('x: ', note.ticks * unitWidth);
-            console.log('y: ', note.midi);
-            console.log('w: ', note.durationTicks * unitWidth);
-            console.log('h: ', unitHeight);
         })
     });
 }
