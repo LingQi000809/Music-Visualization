@@ -81,7 +81,7 @@
             reader.onload = function(e) {
                 midi = new Midi(e.target.result);
 
-                draw(midi);
+                main(midi);
             };
             reader.readAsArrayBuffer(file);
         }

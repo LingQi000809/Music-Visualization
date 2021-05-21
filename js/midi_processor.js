@@ -2,7 +2,7 @@
 let name, tracks, ppq, timeSigs;
 let maxTicks;
 let windowWidth;
-let profiles, correlations; // key for each window
+let profiles, correlations, bestKeys; // key for each window
 
 const noteRange = 130; // 130 possible pitches from midi
 
@@ -12,7 +12,7 @@ let w, h;
 let unitWidth, unitHeight;
 
 
-function draw(midi) {
+function main(midi) {
 
     // canvas variables
     canvas = document.getElementById("canvas");
@@ -41,6 +41,10 @@ function draw(midi) {
         return findR(profile);
     }); // 24 tonal hierarchy vectors (correlations) for each window
     console.log(correlations);
+    bestKeys = correlations.map((correlation) => {
+        return findBestKey(correlation);
+    }); //  the best possible key for each window
+    console.log(bestKeys.map(key => indexToKey(key)));
 
     // fill cells
     tracks.forEach((track) => {
@@ -180,4 +184,39 @@ function findR(window) {
     }
 
     return correlations;
+}
+
+function findBestKey(window) {
+    let max = window.reduce(function(a, b) {
+        return Math.max(a, b);
+    });
+    let index = window.findIndex((r) => r == max);
+    return index;
+}
+
+function indexToKey(index) {
+    if (index == 0) return 'C';
+    if (index == 1) return 'C#';
+    if (index == 2) return 'D';
+    if (index == 3) return 'D#';
+    if (index == 4) return 'E';
+    if (index == 5) return 'F';
+    if (index == 6) return 'F#';
+    if (index == 7) return 'G';
+    if (index == 8) return 'G#';
+    if (index == 9) return 'A';
+    if (index == 10) return 'A#';
+    if (index == 11) return 'B';
+    if (index == 12) return 'c';
+    if (index == 13) return 'c#';
+    if (index == 14) return 'd';
+    if (index == 15) return 'd#';
+    if (index == 16) return 'e';
+    if (index == 17) return 'f';
+    if (index == 18) return 'f#';
+    if (index == 19) return 'g';
+    if (index == 20) return 'g#';
+    if (index == 21) return 'a';
+    if (index == 22) return 'a#';
+    if (index == 23) return 'b';
 }
