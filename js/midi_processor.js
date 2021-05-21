@@ -47,18 +47,7 @@ function main(midi) {
     unitWidth = w / maxTicks; // width per tick
     unitHeight = h / noteRange; // height of each note
 
-
-
-    profiles = findPitchProfiles(); // key for each window
-    console.log(profiles);
-    correlations = profiles.map((profile) => {
-        return findR(profile);
-    }); // 24 tonal hierarchy vectors (correlations) for each window
-    console.log(correlations);
-    bestKeys = correlations.map((correlation) => {
-        return findBestKey(correlation);
-    }); //  the best possible key for each window
-    console.log(bestKeys.map(key => keyIDToKey(key)));
+    keyFinding();
 
     // fill cells
     tracks.forEach((track) => {
@@ -73,6 +62,19 @@ function main(midi) {
                 unitHeight);
         })
     });
+}
+
+function keyFinding() {
+    profiles = findPitchProfiles(); // key for each window
+    console.log(profiles);
+    correlations = profiles.map((profile) => {
+        return findR(profile);
+    }); // 24 tonal hierarchy vectors (correlations) for each window
+    console.log(correlations);
+    bestKeys = correlations.map((correlation) => {
+        return findBestKey(correlation);
+    }); //  the best possible key for each window
+    console.log(bestKeys.map(key => keyIDToKey(key)));
 }
 
 function getMaxTicks() {
@@ -150,6 +152,10 @@ function findWindowID(note) {
     let windowId = Math.floor(curTicks / curWidth) + curDiv.startWin;
 
     return windowId;
+}
+
+function findPPAmong(notes) {
+
 }
 
 function findR(window) {
