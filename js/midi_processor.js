@@ -1,7 +1,8 @@
 // midi elements
 let name, tracks, ppq, timeSigs;
 let maxTicks;
-let windowWidth;
+let windowUnit = 4; // number of measures in a unit
+let timeDivisions = [];
 let profiles, correlations, bestKeys; // key for each window
 
 const noteRange = 130; // 130 possible pitches from midi
@@ -26,6 +27,19 @@ function main(midi) {
     ppq = midi.header.ppq; // the Pulses Per Quarter Note (quarter beat duration)
     maxTicks = getMaxTicks();
     timeSigs = midi.header.timeSignatures;
+    // time divisions
+    timeSigs.forEach(timeSig => {
+        let t = timeSig.timeSignature;
+        let startTick = timeSig.ticks;
+        let tpm = 4 / t[1] * t[0] * ppq; // ticks per measure
+        timeDivisions.push({
+            width: tpm * windowUnit, // unit for window: ticks
+            startTick: startTick,
+            endTick: 0,
+            startWin: 0,
+            endWin: 0,
+        });
+    });
 
     // drawing variables
     // nUnits = Math.ceil(maxTicks / ppq);
@@ -44,16 +58,15 @@ function main(midi) {
     bestKeys = correlations.map((correlation) => {
         return findBestKey(correlation);
     }); //  the best possible key for each window
-    console.log(bestKeys.map(key => indexToKey(key)));
+    console.log(bestKeys.map(key => keyIDToKey(key)));
 
     // fill cells
     tracks.forEach((track) => {
         let notes = track.notes;
         notes.forEach((note) => {
-            let r = Math.floor(Math.random() * (255 - 150) + 150);
-            let g = Math.floor(Math.random() * (255 - 150) + 150);
-            let b = Math.floor(Math.random() * (255 - 150) + 150);
-            ctx.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
+            let windowID = findWindowID(note);
+            let keyID = bestKeys[windowID];
+            ctx.fillStyle = keyIDToColor(keyID);
             ctx.fillRect(note.ticks * unitWidth,
                 (noteRange - note.midi) * unitHeight,
                 note.durationTicks * unitWidth,
@@ -73,22 +86,6 @@ function getMaxTicks() {
 // key for every measure
 function findPitchProfiles() {
     let windowsPP = []; // pitch profiles [each pitch's unit: number of quarter notes]
-    let windowsKeyR = []; // correlation efficient for each key
-
-    // time divisions
-    let timeDivisions = []; // divisions by time signatures
-    timeSigs.forEach(timeSig => {
-        let t = timeSig.timeSignature;
-        let startTick = timeSig.ticks;
-        let tpm = 4 / t[1] * t[0] * ppq; // ticks per measure
-        timeDivisions.push({
-            width: tpm, // unit for window: ticks
-            startTick: startTick,
-            endTick: 0,
-            startWin: 0,
-            endWin: 0,
-        });
-    });
 
     // assign window slots
     for (let i = 0; i < timeDivisions.length; i++) {
@@ -112,14 +109,16 @@ function findPitchProfiles() {
             windowsPP.push([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]); // 12-vector pitch profile
         }
     }
+    console.log(windowsPP);
 
     // assign each note to each window's pitch profile
     tracks.forEach((track) => {
         let notes = track.notes;
         notes.forEach((note) => {
-            let curTicks = note.ticks;
 
             let curDuration = note.durationTicks;
+            let curTicks = note.ticks;
+
             let divIndex = timeDivisions.findIndex(div => div.startTick <= curTicks);
             let curDiv = timeDivisions[divIndex];
             let curWidth = curDiv.width;
@@ -132,11 +131,25 @@ function findPitchProfiles() {
 
             let addedDuration = curDuration - ticksOverflow;
             windowsPP[windowId][curPitchId] += addedDuration / ppq;
-            windowsPP[windowId + 1][curPitchId] += ticksOverflow / ppq;
+            if (windowId != windowsPP.length - 1) {
+                windowsPP[windowId + 1][curPitchId] += ticksOverflow / ppq;
+            }
         })
     });
 
     return windowsPP;
+}
+
+function findWindowID(note) {
+    let curTicks = note.ticks;
+
+    let divIndex = timeDivisions.findIndex(div => div.startTick <= curTicks);
+    let curDiv = timeDivisions[divIndex];
+    let curWidth = curDiv.width;
+
+    let windowId = Math.floor(curTicks / curWidth) + curDiv.startWin;
+
+    return windowId;
 }
 
 function findR(window) {
@@ -194,7 +207,7 @@ function findBestKey(window) {
     return index;
 }
 
-function indexToKey(index) {
+function keyIDToKey(index) {
     if (index == 0) return 'C';
     if (index == 1) return 'C#';
     if (index == 2) return 'D';
@@ -219,4 +232,31 @@ function indexToKey(index) {
     if (index == 21) return 'a';
     if (index == 22) return 'a#';
     if (index == 23) return 'b';
+}
+
+function keyIDToColor(index) {
+    if (index == 0) return '#F50659';
+    if (index == 1) return '#33FAA8';
+    if (index == 2) return '#F69500';
+    if (index == 3) return '#3A01FD';
+    if (index == 4) return '#FAF600';
+    if (index == 5) return '#E403FD';
+    if (index == 6) return '#52FB00';
+    if (index == 7) return '#F54400';
+    if (index == 8) return '#186FFD';
+    if (index == 9) return '#F8D200';
+    if (index == 10) return '#9A02FD';
+    if (index == 11) return '#DDF900';
+    if (index == 12) return '#1023FC';
+    if (index == 13) return '#F9E400';
+    if (index == 14) return '#BD03FC';
+    if (index == 15) return '#93F900';
+    if (index == 16) return '#F40910';
+    if (index == 17) return '#2EDFFC';
+    if (index == 18) return '#F7B300';
+    if (index == 19) return '#6901FD';
+    if (index == 20) return '#EEFA00';
+    if (index == 21) return '#F306B5';
+    if (index == 22) return '#32F901';
+    if (index == 23) return '#F66D00';
 }
