@@ -1,3 +1,7 @@
+// divide and conquer on notes sorted by ticks:
+// both C -> C, not cm
+
+
 // midi elements
 let name, tracks, ppq, timeSigs;
 let maxTicks;
@@ -100,7 +104,7 @@ function main(midi) {
             windows[windowId].push(curNote);
         })
     });
-    console.log(windows);
+    // console.log(windows);
 
     // drawing variables
     // nUnits = Math.ceil(maxTicks / ppq);
@@ -108,7 +112,23 @@ function main(midi) {
     unitWidth = w / maxTicks; // width per tick
     unitHeight = h / noteRange; // height of each note
 
-    keyFinding();
+    // keyFinding();
+    vectorAddition();
+
+
+}
+
+function keyFinding() {
+    profiles = findPitchProfiles(); // key for each window
+    console.log(profiles);
+    correlations = profiles.map((profile) => {
+        return findR(profile);
+    }); // 24 tonal hierarchy vectors (correlations) for each window
+    console.log(correlations);
+    bestKeys = correlations.map((correlation) => {
+        return findBestKey(correlation);
+    }); //  the best possible key for each window
+    console.log(bestKeys.map(key => keyIDToKey(key)));
 
     // fill cells
     tracks.forEach((track) => {
@@ -125,43 +145,30 @@ function main(midi) {
     });
 }
 
-function keyFinding() {
-    profiles = findPitchProfiles(); // key for each window
-    console.log(profiles);
-    correlations = profiles.map((profile) => {
-        return findR(profile);
-    }); // 24 tonal hierarchy vectors (correlations) for each window
-    console.log(correlations);
-    bestKeys = correlations.map((correlation) => {
-        return findBestKey(correlation);
-    }); //  the best possible key for each window
-    console.log(bestKeys.map(key => keyIDToKey(key)));
-}
+let majorVectors, minorVectors;
 
 function vectorAddition() {
     let r = 100; // radius: max magnitude
-    let a = (Math.sin(30 * Math.PI / 180)) * r; // 30 degree opposite side
-    let b = (Math.cos(30 * Math.PI / 180)) * r; // 30 degree adjacent side
-    let c = (Math.sin(15 * Math.PI / 180)) * r; // 15 degree opposite side
-    let d = (Math.cos(15 * Math.PI / 180)) * r; // 15 degree adjacent side
-    let e = (Math.sin(45 * Math.PI / 180)) * r; // 45 degree opposite/adjacent side
-
-    // max [x,y]
-    let major = [
-        [0, -r], // C
+    let a = (Math.sin(30 * Math.PI / 180)); // 30 degree opposite side
+    let b = (Math.cos(30 * Math.PI / 180)); // 30 degree adjacent side
+    let c = (Math.sin(15 * Math.PI / 180)); // 15 degree opposite side
+    let d = (Math.cos(15 * Math.PI / 180)); // 15 degree adjacent side
+    let e = (Math.sin(45 * Math.PI / 180)); // 45 degree opposite/adjacent side
+    majorVectors = [
+        [0, -1], // C
         [-a, b], // C#
         [b, -a], // D
-        [-r, 0], // D#
+        [-1, 0], // D#
         [b, a], // E
         [-a, -b], // F
-        [0, r], // F#
+        [0, 1], // F#
         [a, -b], // G
         [-b, a], // G#
-        [r, 0], // A
+        [1, 0], // A
         [-b, -a], // A#
         [a, b] // B
     ];
-    let minor = [
+    minorVectors = [
         [-d, c], // c
         [d, c], // c#
         [-e, -e], // d
@@ -176,15 +183,122 @@ function vectorAddition() {
         [e, -e] // b
     ];
 
-    // total magnitude available for each window: r
-    let windowMagUnits = []; // the magnitude for one tick, calculated for each window
-    for (let i = 0; i < timeDivisions.length; i++) {
-        let curDiv = timeDivisions[i];
-        for (let j = 0; j < curDiv.nWindows; j++) {
-            windowMagUnits.push(r / curDiv.width); // magnitude per tick for each window
+    for (let i = 0; i < windows.length; i++) {
+        let window = windows[i];
+        window.sort((note1, note2) => {
+            return note1.ticks - note2.ticks;
+        });
+        console.log(window);
+
+        // find magnitude unit for this window
+        let totalDuration = 0;
+        window.forEach(note => {
+            totalDuration += note.durationTicks;
+        });
+        let magUnit = r / totalDuration;
+        console.log(magUnit);
+
+        let windowVector = getFinalVector(window, magUnit);
+        console.log(windowVector);
+    };
+
+}
+
+function getFinalVector(notes, magUnit) {
+    // base cases
+    if (notes.length == 0) {
+        return [0, 0];
+    } else if (notes.length == 1) {
+        let note = notes[0];
+        let v = getNoteVector('major', notes[0], magUnit);
+        console.log(note, v);
+        return v;
+    } else if (notes.length == 2) {
+        let note1 = notes[0];
+        let note2 = notes[1];
+        let pitch1 = Math.floor(note1.midi % 12);
+        let pitch2 = Math.floor(note2.midi % 12);
+        let mode1 = 'major',
+            mode2 = 'major';
+
+        // major / minor thirds: use inner circle for one note
+        if (pitch1 - pitch2 == 3 || pitch2 - pitch1 == 4) {
+            // pitch1 is on top of pitch2 by minor third 
+            // (E.G. 1-Eb; 2-c)
+            // pitch2 is on top of pitch1 by major third
+            // (E.G. 1-C; 2-e)
+            mode2 = 'minor';
+        } else if (pitch2 - pitch1 == 3 || pitch1 - pitch2 == 4) {
+            // pitch2 is on top of pitch1 by minor third 
+            // (E.G. 1-c; 2-Eb)
+            // pitch1 is on top of pitch2 by major third
+            // (E.G. 1-e; 2-C)
+            mode1 = 'minor';
         }
+
+        let v1 = getNoteVector(mode1, note1, magUnit);
+        let v2 = getNoteVector(mode2, note2, magUnit);
+        let v = [v1[0] + v2[0], v1[1] + v2[1]]
+        console.log(note1, note2, v);
+        return v;
+    } else if (notes.length == 3) {
+        let note1 = notes[0];
+        let note2 = notes[1];
+        let note3 = notes[2];
+        let pitch1 = Math.floor(note1.midi % 12);
+        let pitch2 = Math.floor(note2.midi % 12);
+        let pitch3 = Math.floor(note3.midi % 12);
+        let mode1 = 'major',
+            mode2 = 'major',
+            mode3 = 'major';
+
+        // major / minor thirds between pitch2 and pitch3?
+        if (pitch2 - pitch3 == 3 || pitch3 - pitch2 == 4) {
+            mode3 = 'minor';
+        } else if (pitch3 - pitch2 == 3 || pitch2 - pitch3 == 4) {
+            mode2 = 'minor';
+        }
+        // major / minor thirds between pitch1 and pitch3?
+        if (pitch1 - pitch3 == 3 || pitch3 - pitch1 == 4) {
+            mode3 = 'minor';
+        } else if (pitch3 - pitch1 == 3 || pitch1 - pitch3 == 4) {
+            mode1 = 'minor';
+        }
+        // major / minor thirds between pitch1 and pitch2?
+        if (pitch1 - pitch2 == 3 || pitch2 - pitch1 == 4) {
+            mode2 = 'minor';
+        } else if (pitch2 - pitch1 == 3 || pitch1 - pitch2 == 4) {
+            mode1 = 'minor';
+        }
+
+        let v1 = getNoteVector(mode1, note1, magUnit);
+        let v2 = getNoteVector(mode2, note2, magUnit);
+        let v3 = getNoteVector(mode3, note3, magUnit);
+        let v = [v1[0] + v2[0] + v3[0], v1[1] + v2[1] + v3[1]]
+        console.log(note1, note2, note3, v);
+        return v;
     }
 
+    // divide
+    let mid = Math.ceil(notes.length / 2);
+    // conquer
+    let leftVector = getFinalVector(notes.slice(0, mid), magUnit);
+    let rightVector = getFinalVector(notes.slice(-mid), magUnit);
+    // combine
+    let result = [leftVector[0] + rightVector[0], leftVector[1] + rightVector[1]];
+    // console.log(leftVector, rightVector, result);
+    return result;
+}
+
+function getNoteVector(mode, note, magUnit) {
+    let pitch = Math.floor(note.midi % 12);
+    let mag = note.durationTicks * magUnit;
+    if (mode == 'major') {
+        return majorVectors[pitch].map(v => v * mag);
+    }
+    if (mode == 'minor') {
+        return minorVectors[pitch].map(v => v * mag);
+    }
 }
 
 function getMaxTicks() {
@@ -208,7 +322,6 @@ function findPitchProfiles() {
         })
         windowsPP.push(pitchProfile);
     }
-    console.log(windowsPP);
     return windowsPP;
 }
 
