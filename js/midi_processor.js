@@ -1,8 +1,9 @@
 // midi elements
 let name, tracks, ppq, timeSigs;
 let maxTicks;
-let windowUnit = 4; // number of measures in a unit
-let timeDivisions = [];
+let windowUnit = 1; // number of measures in a unit
+let timeDivisions; // divisions based on time signatures
+let windows; // notes divided into windows
 let profiles, correlations, bestKeys; // key for each window
 
 const noteRange = 130; // 130 possible pitches from midi
@@ -14,6 +15,8 @@ let unitWidth, unitHeight;
 
 
 function main(midi) {
+    timeDivisions = []; // divisions based on time signatures
+    windows = [] // notes divided into windows
 
     // canvas variables
     canvas = document.getElementById("canvas");
@@ -24,7 +27,7 @@ function main(midi) {
 
     // midi variables
     tracks = midi.tracks;
-    ppq = midi.header.ppq; // the Pulses Per Quarter Note (quarter beat duration)
+    ppq = midi.header.ppq; // the Pulses Per Quarter Note (quarter beat ticks duration)
     maxTicks = getMaxTicks();
     timeSigs = midi.header.timeSignatures;
     // time divisions
@@ -33,13 +36,71 @@ function main(midi) {
         let startTick = timeSig.ticks;
         let tpm = 4 / t[1] * t[0] * ppq; // ticks per measure
         timeDivisions.push({
-            width: tpm * windowUnit, // unit for window: ticks
+            width: tpm * windowUnit, // window width - unit: ticks
             startTick: startTick,
             endTick: 0,
             startWin: 0,
             endWin: 0,
+            nWindows: 0
         });
     });
+    // parameters for time divisions
+    for (let i = 0; i < timeDivisions.length; i++) {
+        let curDivision = timeDivisions[i];
+        let curDivStart = curDivision.startTick;
+        let endTick = maxTicks;
+        if (i != timeDivisions.length - 1) {
+            endTick = timeDivisions[i + 1].startTick - 1;
+        }
+        curDivision.endTick = endTick;
+
+        let startWin = 0;
+        if (i != 0) {
+            startWin = timeDivisions[i - 1].endWin + 1;
+        }
+        curDivision.startWin = startWin;
+        let nWindows = Math.ceil((endTick - curDivStart) / curDivision.width); // number of windows in this division
+        curDivision.nWindows = nWindows;
+        curDivision.endWin = startWin + nWindows;
+
+        for (let j = 0; j < timeDivisions[i].nWindows; j++) {
+            windows.push([]); // each window has an array of notes
+        }
+    }
+    // allocate notes into windows
+    tracks.forEach((track) => {
+        let notes = track.notes;
+        notes.forEach((note) => {
+            let curDuration = note.durationTicks;
+            let curTicks = note.ticks;
+            // find div
+            let divIndex = timeDivisions.findIndex(div => div.startTick <= curTicks);
+            let curDiv = timeDivisions[divIndex];
+            let curWidth = curDiv.width;
+            // find window
+            let windowId = Math.floor(curTicks / curWidth) + curDiv.startWin;
+
+            // calculate duration for each node
+            let windStartTick = (curDiv.startTick + (windowId - curDiv.startWin)) * curWidth;
+            let ticksOverflow = Math.max(0, curDuration - (curWidth - (curTicks - windStartTick)));
+            let addedDuration = curDuration - ticksOverflow;
+
+            let curNote = note;
+            if (ticksOverflow != 0 && windowId != windows.length - 1) {
+                // note into current window
+                curNote = {...note };
+                curNote.durationTicks = addedDuration;
+                // note overflow - into next window
+                noteSplit = {...note };
+                noteSplit.durationTicks = ticksOverflow;
+                noteSplit.ticks = windStartTick + curWidth;
+                windows[windowId + 1].push(noteSplit);
+            }
+            // console.log(windowId)
+            windows[windowId].push(curNote);
+        })
+    });
+    console.log(windows);
 
     // drawing variables
     // nUnits = Math.ceil(maxTicks / ppq);
@@ -77,6 +138,55 @@ function keyFinding() {
     console.log(bestKeys.map(key => keyIDToKey(key)));
 }
 
+function vectorAddition() {
+    let r = 100; // radius: max magnitude
+    let a = (Math.sin(30 * Math.PI / 180)) * r; // 30 degree opposite side
+    let b = (Math.cos(30 * Math.PI / 180)) * r; // 30 degree adjacent side
+    let c = (Math.sin(15 * Math.PI / 180)) * r; // 15 degree opposite side
+    let d = (Math.cos(15 * Math.PI / 180)) * r; // 15 degree adjacent side
+    let e = (Math.sin(45 * Math.PI / 180)) * r; // 45 degree opposite/adjacent side
+
+    // max [x,y]
+    let major = [
+        [0, -r], // C
+        [-a, b], // C#
+        [b, -a], // D
+        [-r, 0], // D#
+        [b, a], // E
+        [-a, -b], // F
+        [0, r], // F#
+        [a, -b], // G
+        [-b, a], // G#
+        [r, 0], // A
+        [-b, -a], // A#
+        [a, b] // B
+    ];
+    let minor = [
+        [-d, c], // c
+        [d, c], // c#
+        [-e, -e], // d
+        [c, d], // d#
+        [c, -d], // e
+        [-e, e], // f
+        [d, -c], // f#
+        [-d, -c], // g
+        [e, e], // g#
+        [-c, -d], // a
+        [-c, d], // a#
+        [e, -e] // b
+    ];
+
+    // total magnitude available for each window: r
+    let windowMagUnits = []; // the magnitude for one tick, calculated for each window
+    for (let i = 0; i < timeDivisions.length; i++) {
+        let curDiv = timeDivisions[i];
+        for (let j = 0; j < curDiv.nWindows; j++) {
+            windowMagUnits.push(r / curDiv.width); // magnitude per tick for each window
+        }
+    }
+
+}
+
 function getMaxTicks() {
     let maxTicks = 0;
     tracks.forEach((track) => {
@@ -88,57 +198,17 @@ function getMaxTicks() {
 // key for every measure
 function findPitchProfiles() {
     let windowsPP = []; // pitch profiles [each pitch's unit: number of quarter notes]
-
-    // assign window slots
-    for (let i = 0; i < timeDivisions.length; i++) {
-        let curDivision = timeDivisions[i];
-        let curDivStart = curDivision.startTick;
-        let endTick = maxTicks;
-        if (i != timeDivisions.length - 1) {
-            endTick = timeDivisions[i + 1].startTick - 1;
-        }
-        curDivision.endTick = endTick;
-
-        let startWin = 0;
-        if (i != 0) {
-            startWin = timeDivisions[i - 1].endWin + 1;
-        }
-        curDivision.startWin = startWin;
-        let nWindows = Math.ceil((endTick - curDivStart) / curDivision.width); // number of windows in this division
-        curDivision.endWin = startWin + nWindows;
-
-        for (let j = 0; j < nWindows; j++) {
-            windowsPP.push([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]); // 12-vector pitch profile
-        }
+    // find pitch profile for each window
+    for (let i = 0; i < windows.length; i++) {
+        let window = windows[i];
+        let pitchProfile = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        window.forEach((note) => {
+            let curPitchId = Math.floor(note.midi % 12);
+            pitchProfile[curPitchId] += note.durationTicks / ppq;
+        })
+        windowsPP.push(pitchProfile);
     }
     console.log(windowsPP);
-
-    // assign each note to each window's pitch profile
-    tracks.forEach((track) => {
-        let notes = track.notes;
-        notes.forEach((note) => {
-
-            let curDuration = note.durationTicks;
-            let curTicks = note.ticks;
-
-            let divIndex = timeDivisions.findIndex(div => div.startTick <= curTicks);
-            let curDiv = timeDivisions[divIndex];
-            let curWidth = curDiv.width;
-
-            let windowId = Math.floor(curTicks / curWidth) + curDiv.startWin;
-
-            let curPitchId = Math.floor(note.midi % 12);
-            let windStartTick = (curDiv.startTick + (windowId - curDiv.startWin)) * curWidth;
-            let ticksOverflow = Math.max(0, curDuration - (curWidth - (curTicks - windStartTick)));
-
-            let addedDuration = curDuration - ticksOverflow;
-            windowsPP[windowId][curPitchId] += addedDuration / ppq;
-            if (windowId != windowsPP.length - 1) {
-                windowsPP[windowId + 1][curPitchId] += ticksOverflow / ppq;
-            }
-        })
-    });
-
     return windowsPP;
 }
 
