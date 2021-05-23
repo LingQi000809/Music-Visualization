@@ -11,7 +11,9 @@ let windows; // notes divided into windows
 // key-finding algorithm
 let profiles, correlations, bestKeys;
 // vector-addition
-let colorWheelData, windowColors;
+let colorData, windowColors;
+let radius = 50; // radius: max magnitude
+
 
 const noteRange = 130; // 130 possible pitches from midi
 
@@ -149,7 +151,7 @@ function keyFinding() {
 let majorVectors, minorVectors;
 
 function vectorAddition() {
-    let r = 100; // radius: max magnitude
+    windowColors = [];
     let a = (Math.sin(30 * Math.PI / 180)); // 30 degree opposite side
     let b = (Math.cos(30 * Math.PI / 180)); // 30 degree adjacent side
     let c = (Math.sin(15 * Math.PI / 180)); // 15 degree opposite side
@@ -197,25 +199,40 @@ function vectorAddition() {
         window.forEach(note => {
             totalDuration += note.durationTicks;
         });
-        let magUnit = r / totalDuration;
-        console.log(magUnit);
+        let magUnit = radius / totalDuration;
+        // console.log(magUnit);
 
         let windowVector = getFinalVector(window, magUnit);
         console.log(windowVector);
+
+        // x y coordinates
+        let x = Math.floor(windowVector[0] + radius); // x-coordinate
+        let y = Math.floor(windowVector[1] + radius); // y-coordinate
+
+        // get RGBA values at the pixel in the color wheel
+        let dataStart = 4 * (y * radius + x);
+        console.log(x, y, dataStart);
+
+        let dataR = colorData[dataStart],
+            dataG = colorData[dataStart + 1],
+            dataB = colorData[dataStart + 2],
+            dataA = colorData[dataStart + 3];
+        let curColor = 'rgba(' + dataR + ', ' + dataG + ', ' + dataB + ', ' + dataA / 255 + ')';
+        windowColors.push(curColor);
     };
-
-
-    // find color of the vector
-
-    var clrWheelEle = document.getElementById("color-wheel");
-    clrWheelEle.src = "img/colorWheel.png";
-    clrWheelEle.width = r;
-    clrWheelEle.height = r;
-    // let clrWheelEle = document.getElementById("color-wheel");
-    ctx.drawImage(clrWheelEle, 0, 0, clrWheelEle.width, clrWheelEle.height);
-    colorWheelData = ctx.getImageData(0, 0, clrWheelEle.width, clrWheelEle.height).data;
-    console.log("pixel: ", colorWheelData);
-
+    console.log(windowColors);
+    // fill cells
+    tracks.forEach((track) => {
+        let notes = track.notes;
+        notes.forEach((note) => {
+            let windowID = findWindowID(note);
+            ctx.fillStyle = windowColors[windowID];
+            ctx.fillRect(note.ticks * unitWidth,
+                (noteRange - note.midi) * unitHeight,
+                note.durationTicks * unitWidth,
+                unitHeight);
+        })
+    });
 }
 
 
@@ -227,7 +244,7 @@ function getFinalVector(notes, magUnit) {
     } else if (notes.length == 1) {
         let note = notes[0];
         let v = getNoteVector('major', notes[0], magUnit);
-        console.log(note, v);
+        // console.log(note, v);
         return v;
     } else if (notes.length == 2) {
         let note1 = notes[0];
@@ -255,7 +272,7 @@ function getFinalVector(notes, magUnit) {
         let v1 = getNoteVector(mode1, note1, magUnit);
         let v2 = getNoteVector(mode2, note2, magUnit);
         let v = [v1[0] + v2[0], v1[1] + v2[1]]
-        console.log(note1, note2, v);
+            // console.log(note1, note2, v);
         return v;
     } else if (notes.length == 3) {
         let note1 = notes[0];
@@ -291,7 +308,7 @@ function getFinalVector(notes, magUnit) {
         let v2 = getNoteVector(mode2, note2, magUnit);
         let v3 = getNoteVector(mode3, note3, magUnit);
         let v = [v1[0] + v2[0] + v3[0], v1[1] + v2[1] + v3[1]]
-        console.log(note1, note2, note3, v);
+            // console.log(note1, note2, note3, v);
         return v;
     }
 

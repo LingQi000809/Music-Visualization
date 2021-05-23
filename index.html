@@ -25,15 +25,16 @@
         <input type="file" accept="audio/midi" />
     </div>
 
-    <img id='color-wheel' src='img/colorWheel.png' />
+    <div id="imgDrop">
+        <input type="file" id="imgFile"></input>
+        <img id="myImage" />
+    </div>
 
     <div id="canvas-wrapper">
         <canvas id="canvas">
 
         </canvas>
     </div>
-
-    <canvas id="colorwheel-canvas">
 
     </canvas>
 
@@ -49,6 +50,22 @@
         let w = ctx.canvas.width;
         let h = ctx.canvas.height;
 
+        // img (color wheel)
+        document.getElementById('imgFile').onchange = function(evt) {
+            let tgt = evt.target || window.event.srcElement,
+                files = tgt.files;
+
+            // FileReader support
+            if (FileReader && files && files.length) {
+                let fr = new FileReader();
+                fr.onload = () => {
+                    showImage(fr); // and get pixel data
+                }
+                fr.readAsDataURL(files[0]);
+            }
+        }
+
+        // midi file handling
         if (!(
                 window.File &&
                 window.FileReader &&
@@ -96,6 +113,25 @@
                 main(midi);
             };
             reader.readAsArrayBuffer(file);
+        }
+
+        function showImage(fileReader) {
+            var img = document.getElementById("myImage");
+            img.width = radius * 2;
+            img.height = radius * 2;
+            // radius = img.width;
+            img.onload = () => getImageData(img);
+            img.src = fileReader.result;
+        }
+
+        function getImageData(img) {
+            ctx.drawImage(img, 0, 0, img.width, img.height);
+            let imageData = ctx.getImageData(0, 0, img.width, img.height);
+            colorData = ctx.getImageData(0, 0, img.width, img.height).data;
+            console.log("image data:", colorData);
+
+            ctx.clearRect(0, 0, w, h);
+            ctx.putImageData(imageData, 20, 20);
         }
     </script>
 
