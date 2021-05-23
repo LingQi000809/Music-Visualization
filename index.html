@@ -28,6 +28,7 @@
     <div id="imgDrop">
         <input type="file" id="imgFile"></input>
         <img id="myImage" />
+        <canvas id="imgCanvas"></canvas>
     </div>
 
     <div id="canvas-wrapper">
@@ -49,6 +50,9 @@
         let ctx = canvas.getContext("2d");
         let w = ctx.canvas.width;
         let h = ctx.canvas.height;
+
+        let imgCanvas = document.getElementById('imgCanvas');
+        let imgCtx = imgCanvas.getContext("2d");
 
         // img (color wheel)
         document.getElementById('imgFile').onchange = function(evt) {
@@ -125,13 +129,10 @@
         }
 
         function getImageData(img) {
-            ctx.drawImage(img, 0, 0, img.width, img.height);
-            let imageData = ctx.getImageData(0, 0, img.width, img.height);
-            colorData = ctx.getImageData(0, 0, img.width, img.height).data;
-            console.log("image data:", colorData);
-
-            ctx.clearRect(0, 0, w, h);
-            ctx.putImageData(imageData, 20, 20);
+            let ctxW = imgCtx.canvas.width = img.width;
+            let ctxH = imgCtx.canvas.height = img.height;
+            imgCtx.drawImage(img, 0, 0, img.width, img.height);
+            img.style.display = 'none';
         }
     </script>
 

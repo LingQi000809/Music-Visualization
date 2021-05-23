@@ -12,7 +12,7 @@ let windows; // notes divided into windows
 let profiles, correlations, bestKeys;
 // vector-addition
 let colorData, windowColors;
-let radius = 50; // radius: max magnitude
+let radius = 100; // radius: max magnitude
 
 
 const noteRange = 130; // 130 possible pitches from midi
@@ -210,17 +210,23 @@ function vectorAddition() {
         let y = Math.floor(windowVector[1] + radius); // y-coordinate
 
         // get RGBA values at the pixel in the color wheel
-        let dataStart = 4 * (y * radius + x);
-        console.log(x, y, dataStart);
+        // let dataStart = 4 * (y * radius + x);
+        console.log(x, y);
 
-        let dataR = colorData[dataStart],
-            dataG = colorData[dataStart + 1],
-            dataB = colorData[dataStart + 2],
-            dataA = colorData[dataStart + 3];
+        let pixel = imgCtx.getImageData(x, y, 1, 1).data
+            // let dataR = colorData[dataStart],
+            //     dataG = colorData[dataStart + 1],
+            //     dataB = colorData[dataStart + 2],
+            //     dataA = colorData[dataStart + 3];
+        let dataR = pixel[0],
+            dataG = pixel[1],
+            dataB = pixel[2],
+            dataA = pixel[3];
         let curColor = 'rgba(' + dataR + ', ' + dataG + ', ' + dataB + ', ' + dataA / 255 + ')';
         windowColors.push(curColor);
+        console.log(curColor);
     };
-    console.log(windowColors);
+
     // fill cells
     tracks.forEach((track) => {
         let notes = track.notes;
