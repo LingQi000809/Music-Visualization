@@ -113,15 +113,17 @@ function main(midi) {
     unitWidth = w / maxTicks; // width per tick
     unitHeight = h / noteRange; // height of each note
 
-
-
-    // keyFinding();
-    vectorAddition();
+    if (mode == 'kf') {
+        keyFinding();
+    } else if (mode == 'va') {
+        vectorAddition();
+    }
 
 
 }
 
 function keyFinding() {
+
     profiles = findPitchProfiles(); // key for each window
     console.log(profiles);
     correlations = profiles.map((profile) => {
@@ -463,28 +465,28 @@ function keyIDToKey(index) {
 }
 
 function keyIDToColor(index) {
-    if (index == 0) return '#F50659';
-    if (index == 1) return '#33FAA8';
-    if (index == 2) return '#F69500';
-    if (index == 3) return '#3A01FD';
-    if (index == 4) return '#FAF600';
-    if (index == 5) return '#E403FD';
-    if (index == 6) return '#52FB00';
-    if (index == 7) return '#F54400';
-    if (index == 8) return '#186FFD';
-    if (index == 9) return '#F8D200';
-    if (index == 10) return '#9A02FD';
-    if (index == 11) return '#DDF900';
-    if (index == 12) return '#1023FC';
-    if (index == 13) return '#F9E400';
-    if (index == 14) return '#BD03FC';
-    if (index == 15) return '#93F900';
-    if (index == 16) return '#F40910';
-    if (index == 17) return '#2EDFFC';
-    if (index == 18) return '#F7B300';
-    if (index == 19) return '#6901FD';
-    if (index == 20) return '#EEFA00';
-    if (index == 21) return '#F306B5';
-    if (index == 22) return '#32F901';
-    if (index == 23) return '#F66D00';
+    if (index == 0) return '#FC6969'; // C
+    if (index == 1) return '#74FFE5'; // C#
+    if (index == 2) return '#FDC163'; // D
+    if (index == 3) return '#6B77FF'; // D#
+    if (index == 4) return '#FFFD58'; // E
+    if (index == 5) return '#FC6AFF'; // F
+    if (index == 6) return '#73FF8C'; // F#
+    if (index == 7) return '#FC9567'; // G
+    if (index == 8) return '#6FC6FF'; // G#
+    if (index == 9) return '#FEDF5D'; // A
+    if (index == 10) return '#AC69FF'; // A#
+    if (index == 11) return '#A1FF56'; // B
+    if (index == 12) return '#6EA0FF'; // c
+    if (index == 13) return '#FEEE5B'; // c#
+    if (index == 14) return '#D46AFF'; // d
+    if (index == 15) return '#73FF57'; // d#
+    if (index == 16) return '#FC8068'; // e
+    if (index == 17) return '#72EDFF'; // f
+    if (index == 18) return '#FDD060'; // f#
+    if (index == 19) return '#836AFF'; // g
+    if (index == 20) return '#D2FF57'; // g#
+    if (index == 21) return '#FC6AB5'; // a
+    if (index == 22) return '#74FFBA'; // a#
+    if (index == 23) return '#FDAB66'; // b
 }

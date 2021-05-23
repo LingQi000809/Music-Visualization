@@ -18,17 +18,20 @@
 <body>
     <!-- The div containing the canvas -->
 
-    <div id="FileDrop">
-        <div id="Text">
-            Drop a midi file here
-        </div>
-        <input type="file" accept="audio/midi" />
-    </div>
-
     <div id="imgDrop">
+        <div id="ImgText">
+            FIRST STEP: Drop an image file as the color wheel
+        </div>
         <input type="file" id="imgFile"></input>
         <img id="myImage" />
         <canvas id="imgCanvas"></canvas>
+    </div>
+
+    <div id="FileDrop">
+        <div id="FileText">
+            Drop a midi file here
+        </div>
+        <input type="file" accept="audio/midi" />
     </div>
 
     <div id="canvas-wrapper">
@@ -50,22 +53,28 @@
         let ctx = canvas.getContext("2d");
         let w = ctx.canvas.width;
         let h = ctx.canvas.height;
+        let mode = 'kf'; // 'kf': key-finding; 'va': vector-addition
+        // vector addition canvas
+        let imgCanvas, imgCtx;
 
-        let imgCanvas = document.getElementById('imgCanvas');
-        let imgCtx = imgCanvas.getContext("2d");
+        if (mode == 'kf') {
+            document.getElementById('imgDrop').style.display = 'none';
+        } else if (mode == 'va') {
+            imgCanvas = document.getElementById('imgCanvas');
+            imgCtx = imgCanvas.getContext("2d");
+            // img (color wheel)
+            document.getElementById('imgFile').onchange = function(evt) {
+                let tgt = evt.target || window.event.srcElement,
+                    files = tgt.files;
 
-        // img (color wheel)
-        document.getElementById('imgFile').onchange = function(evt) {
-            let tgt = evt.target || window.event.srcElement,
-                files = tgt.files;
-
-            // FileReader support
-            if (FileReader && files && files.length) {
-                let fr = new FileReader();
-                fr.onload = () => {
-                    showImage(fr); // and get pixel data
+                // FileReader support
+                if (FileReader && files && files.length) {
+                    let fr = new FileReader();
+                    fr.onload = () => {
+                        showImage(fr); // and get pixel data
+                    }
+                    fr.readAsDataURL(files[0]);
                 }
-                fr.readAsDataURL(files[0]);
             }
         }
 
@@ -101,7 +110,7 @@
                     if (files.length > 0) {
                         const file = files[0];
                         document.querySelector(
-                            "#FileDrop #Text"
+                            "#FileDrop #FileText"
                         ).textContent = file.name;
                         parseFile(file);
                     }
