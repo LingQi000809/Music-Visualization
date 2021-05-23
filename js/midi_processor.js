@@ -8,13 +8,16 @@ let maxTicks;
 let windowUnit = 1; // number of measures in a unit
 let timeDivisions; // divisions based on time signatures
 let windows; // notes divided into windows
-let profiles, correlations, bestKeys; // key for each window
+// key-finding algorithm
+let profiles, correlations, bestKeys;
+// vector-addition
+let colorWheelData, windowColors;
 
 const noteRange = 130; // 130 possible pitches from midi
 
 // canvas variables
-let canvas, ctx;
-let w, h;
+// let canvas, ctx;
+// let w, h;
 let unitWidth, unitHeight;
 
 
@@ -23,10 +26,6 @@ function main(midi) {
     windows = [] // notes divided into windows
 
     // canvas variables
-    canvas = document.getElementById("canvas");
-    ctx = canvas.getContext("2d");
-    w = ctx.canvas.width;
-    h = ctx.canvas.height;
     ctx.clearRect(0, 0, w, h);
 
     // midi variables
@@ -112,6 +111,8 @@ function main(midi) {
     unitWidth = w / maxTicks; // width per tick
     unitHeight = h / noteRange; // height of each note
 
+
+
     // keyFinding();
     vectorAddition();
 
@@ -183,12 +184,13 @@ function vectorAddition() {
         [e, -e] // b
     ];
 
+    // vector addition for each window
     for (let i = 0; i < windows.length; i++) {
         let window = windows[i];
-        window.sort((note1, note2) => {
-            return note1.ticks - note2.ticks;
-        });
-        console.log(window);
+        // window.sort((note1, note2) => {
+        //     return note1.ticks - note2.ticks;
+        // });
+        // console.log(window);
 
         // find magnitude unit for this window
         let totalDuration = 0;
@@ -202,7 +204,21 @@ function vectorAddition() {
         console.log(windowVector);
     };
 
+
+    // find color of the vector
+
+    var clrWheelEle = document.getElementById("color-wheel");
+    clrWheelEle.src = "img/colorWheel.png";
+    clrWheelEle.width = r;
+    clrWheelEle.height = r;
+    // let clrWheelEle = document.getElementById("color-wheel");
+    ctx.drawImage(clrWheelEle, 0, 0, clrWheelEle.width, clrWheelEle.height);
+    colorWheelData = ctx.getImageData(0, 0, clrWheelEle.width, clrWheelEle.height).data;
+    console.log("pixel: ", colorWheelData);
+
 }
+
+
 
 function getFinalVector(notes, magUnit) {
     // base cases

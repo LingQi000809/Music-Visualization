@@ -25,17 +25,29 @@
         <input type="file" accept="audio/midi" />
     </div>
 
+    <img id='color-wheel' src='img/colorWheel.png' />
+
     <div id="canvas-wrapper">
         <canvas id="canvas">
 
         </canvas>
     </div>
 
+    <canvas id="colorwheel-canvas">
+
+    </canvas>
+
     <!-- js -->
     <script src="js/midi_processor.js" defer></script>
 
     <script type="text/javascript">
         let midi = null;
+
+        // canvas variables
+        let canvas = document.getElementById("canvas");
+        let ctx = canvas.getContext("2d");
+        let w = ctx.canvas.width;
+        let h = ctx.canvas.height;
 
         if (!(
                 window.File &&
