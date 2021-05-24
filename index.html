@@ -24,14 +24,41 @@
         </div>
         <input type="file" id="imgFile"></input>
         <img id="myImage" />
-        <canvas id="imgCanvas"></canvas>
     </div>
+    <canvas id="imgCanvas"></canvas>
+
 
     <div id="FileDrop">
         <div id="FileText">
             Drop a midi file here
         </div>
         <input type="file" accept="audio/midi" />
+    </div>
+
+    <!-- parameters -->
+    <div id="parameters">
+        <form>
+            <label for="mode">Choose a mode:</label>
+            <select name="modes" id="modesSelector">
+                <option value="kf">Key Finding</option>
+                <option value="va">Vector Addition</option>
+            </select>
+        </form>
+
+        <form>
+            <label for="windowUnit">How many measures in a window?</label>
+            <select name="windowUnit" id="windowUnitSelector">
+                <option value=1>1</option>
+                <option value=2>2</option>
+                <option value=4>4</option>
+                <option value=8>8</option>
+                <option value=16>16</option>
+                <option value=32>32</option>
+                <option value=64>64</option>
+            </select>
+        </form>
+
+        <input id="submitBtn" type="submit" value="Submit">
     </div>
 
     <div id="canvas-wrapper">
@@ -57,13 +84,21 @@
         // vector addition canvas
         let imgCanvas, imgCtx;
 
-        if (mode == 'kf') {
-            document.getElementById('imgDrop').style.display = 'none';
-        } else if (mode == 'va') {
-            imgCanvas = document.getElementById('imgCanvas');
-            imgCtx = imgCanvas.getContext("2d");
-            // img (color wheel)
-            document.getElementById('imgFile').onchange = function(evt) {
+        document.getElementById('submitBtn').addEventListener('click', () => {
+            mode = document.getElementById('modesSelector').value;
+            windowUnit = document.getElementById('windowUnitSelector').value;
+
+            main(midi);
+        });
+
+        // if (mode == 'kf') {
+        //     // document.getElementById('imgDrop').style.display = 'none';
+        // } else if (mode == 'va') {
+        // document.getElementById('imgDrop').style.display = 'initial';
+        imgCanvas = document.getElementById('imgCanvas');
+        imgCtx = imgCanvas.getContext("2d");
+        // img (color wheel)
+        document.getElementById('imgFile').onchange = function(evt) {
                 let tgt = evt.target || window.event.srcElement,
                     files = tgt.files;
 
@@ -76,7 +111,8 @@
                     fr.readAsDataURL(files[0]);
                 }
             }
-        }
+            // }
+
 
         // midi file handling
         if (!(

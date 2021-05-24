@@ -26,6 +26,18 @@ body {
     margin: 20px auto;
 }
 
+#parameters {
+    position: fixed;
+    bottom: 50px;
+    width: 100%;
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-content: space-around;
+    z-index: 1;
+}
+
 #ImgText {
     text-align: center;
     width: 100%;

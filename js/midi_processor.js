@@ -105,7 +105,7 @@ function main(midi) {
             windows[windowId].push(curNote);
         })
     });
-    // console.log(windows);
+    console.log('windows: ', windows);
 
     // drawing variables
     // nUnits = Math.ceil(maxTicks / ppq);
@@ -125,11 +125,11 @@ function main(midi) {
 function keyFinding() {
 
     profiles = findPitchProfiles(); // key for each window
-    console.log(profiles);
+    console.log('profiles: ', profiles);
     correlations = profiles.map((profile) => {
         return findR(profile);
     }); // 24 tonal hierarchy vectors (correlations) for each window
-    console.log(correlations);
+    console.log('correlations:', correlations);
     bestKeys = correlations.map((correlation) => {
         return findBestKey(correlation);
     }); //  the best possible key for each window
@@ -204,17 +204,18 @@ function vectorAddition() {
         let magUnit = radius / totalDuration;
         // console.log(magUnit);
 
+        // console.log('window: ' + i);
         let windowVector = getFinalVector(window, magUnit);
-        console.log(windowVector);
 
-        // x y coordinates
+        // x y coordinates (get rid of decimal points overflow)
         let x = Math.floor(windowVector[0] + radius); // x-coordinate
+        x = Math.min(radius * 2 - 1, x);
+        x = Math.max(1, x);
         let y = Math.floor(windowVector[1] + radius); // y-coordinate
+        y = Math.min(radius * 2 - 1, y);
+        y = Math.max(1, y);
 
         // get RGBA values at the pixel in the color wheel
-        // let dataStart = 4 * (y * radius + x);
-        console.log(x, y);
-
         let pixel = imgCtx.getImageData(x, y, 1, 1).data
             // let dataR = colorData[dataStart],
             //     dataG = colorData[dataStart + 1],
@@ -225,8 +226,12 @@ function vectorAddition() {
             dataB = pixel[2],
             dataA = pixel[3];
         let curColor = 'rgba(' + dataR + ', ' + dataG + ', ' + dataB + ', ' + dataA / 255 + ')';
+        if (curColor == 'rgba(0, 0, 0, 0)') {
+            console.log(windowVector);
+            console.log(x, y);
+            console.log(i, curColor);
+        }
         windowColors.push(curColor);
-        console.log(curColor);
     };
 
     // fill cells
@@ -252,7 +257,6 @@ function getFinalVector(notes, magUnit) {
     } else if (notes.length == 1) {
         let note = notes[0];
         let v = getNoteVector('major', notes[0], magUnit);
-        // console.log(note, v);
         return v;
     } else if (notes.length == 2) {
         let note1 = notes[0];
@@ -280,7 +284,6 @@ function getFinalVector(notes, magUnit) {
         let v1 = getNoteVector(mode1, note1, magUnit);
         let v2 = getNoteVector(mode2, note2, magUnit);
         let v = [v1[0] + v2[0], v1[1] + v2[1]]
-            // console.log(note1, note2, v);
         return v;
     } else if (notes.length == 3) {
         let note1 = notes[0];
@@ -316,7 +319,6 @@ function getFinalVector(notes, magUnit) {
         let v2 = getNoteVector(mode2, note2, magUnit);
         let v3 = getNoteVector(mode3, note3, magUnit);
         let v = [v1[0] + v2[0] + v3[0], v1[1] + v2[1] + v3[1]]
-            // console.log(note1, note2, note3, v);
         return v;
     }
 
