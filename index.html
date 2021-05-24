@@ -42,6 +42,7 @@
             <select name="modes" id="modesSelector">
                 <option value="kf">Key Finding</option>
                 <option value="va">Vector Addition</option>
+                <option value="kfva">Key Addition</option>
             </select>
         </form>
 
@@ -80,7 +81,7 @@
         let ctx = canvas.getContext("2d");
         let w = ctx.canvas.width;
         let h = ctx.canvas.height;
-        let mode = 'kf'; // 'kf': key-finding; 'va': vector-addition
+        let mode = 'kf'; // 'kf': key-finding; 'va': vector-addition; 'kfva': key-addition
         // vector addition canvas
         let imgCanvas, imgCtx;
 
