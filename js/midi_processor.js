@@ -162,7 +162,7 @@ function kfva() {
             }
 
         }
-        console.log(validR);
+        // console.log(validR);
 
         let resultVector = [0, 0];
         validR.forEach((correl) => {
