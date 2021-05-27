@@ -15,5 +15,13 @@ In this demo, the windows have width in terms of measures (musical bars). You ma
 
 ## Algorithms
 ### key-finding
-This algorithm is proposed by Krumhansl(1990). It successfully identifies the key of the musical selection. With this algorithm, the program decides the key of each window and finds the corresponding color in a predefined set of key-color mapping.
+This algorithm is proposed by Krumhansl (1990). It successfully identifies the key of the musical selection. With this algorithm, the program decides the best key of each window and finds the corresponding color in a predefined set of key-color mapping.
 Information about how the key-finding algorithm works can be found in this document: http://rnhart.net/articles/key-finding/
+
+### vector-addition
+This algorithm is modified from Ciuha, Klemenc, and Solina (2010). 
+Each tone is represented as a vector that points to its color in the color wheel (`img/color_wheel_making.png`).
+The algorithm adds the vectors of notes that are perceived as a whole, usually in a chord. The resulting vector points to a new color, representing the color for the group of notes. If the notes sound consonant together, they will have a highly saturated color, while if they are dissonant, they will be assigned a whitened color to show the tonal ambiguity.
+
+### key-addition
+This is a proposed algorithm that combines the previous two algorithms. The colors are assigned by adding the vectors of all the keys that have a meaningful correlation coefficient - it is not unusual that a musical selection can be interpreted in multiple keys. 
