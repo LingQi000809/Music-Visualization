@@ -167,12 +167,19 @@ function kfva() {
             }
 
         }
-        console.log(validR);
+        // console.log(validR);
         if (highConfidence) {
             validR = validR.filter(cr => cr.r > 1);
+        } else if (validR.length == 1) {
+            // if the only correlation is not especially strong, reflect it by decreasing the saturation
+            magUnit = 1;
         }
-        console.log(validR);
+        // console.log(validR);
         validRs.push(validR);
+        console.log(validR.map(r => {
+            if (r.mode == 'major') return keyIDToKey(r.pitch);
+            else return keyIDToKey(r.pitch + 12);
+        }));
 
         let resultVector = [0, 0];
         validR.forEach((correl) => {
