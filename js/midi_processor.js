@@ -130,12 +130,16 @@ function kfva() {
         return findR(profile);
     }); // 24 tonal hierarchy vectors (correlations) for each window
 
+    console.log('correlations: ', correlations);
+
     let windowVectors = [];
-    // only consider correlations > 0.5
+    let validRs = [];
+    // only consider correlations > 0.6
     correlations.forEach(window => {
         let validR = [];
 
         let magUnit = 0;
+        let highConfidence = false;
         for (let i = 0; i < window.length; i++) {
             let curR = window[i];
             let curMode = 'major';
@@ -143,6 +147,7 @@ function kfva() {
 
             // if confident level is high, add doubled weight to it
             if (curR > 0.8) {
+                highConfidence = true;
                 magUnit += curR * 2;
                 validR.push({
                     mode: curMode,
@@ -152,7 +157,7 @@ function kfva() {
             }
 
             // if confident level is over threshold, add to consideration
-            else if (curR > 0.6) {
+            else if (!highConfidence && curR > 0.6) {
                 magUnit += curR;
                 validR.push({
                     mode: curMode,
@@ -162,7 +167,12 @@ function kfva() {
             }
 
         }
-        // console.log(validR);
+        console.log(validR);
+        if (highConfidence) {
+            validR = validR.filter(cr => cr.r > 1);
+        }
+        console.log(validR);
+        validRs.push(validR);
 
         let resultVector = [0, 0];
         validR.forEach((correl) => {
@@ -475,10 +485,6 @@ function findWindowID(note) {
     let windowId = Math.floor(curTicks / curWidth) + curDiv.startWin;
 
     return windowId;
-}
-
-function findPPAmong(notes) {
-
 }
 
 function findR(window) {
