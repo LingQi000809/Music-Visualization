@@ -1,6 +1,8 @@
 # [DEMO](https://lingqi000809.github.io/Music-Visualization/)
 This project aims to use color information to represent musical data, and create a meaningful and intuitive visualization.
 
+The [Tonejs/Midi](https://github.com/Tonejs/Midi) library is used to parse MIDI files.
+
 The current version is just a rough demo with simple interfaces. Follow these steps to create a music visualization for a piece of your selection:
 1. Upload **an image file for a color wheel** via the file input button at the top. I recommend using `img/colorSquare.png`. This image is used for the *vector addition algorithm* to pick the resulting color.
 2. Drop **the MIDI file** of the music that you hope to visualize into the dashed area. The visualization will be drawn using the *key-finding algorithm* on a 1-measure *window unit*.
